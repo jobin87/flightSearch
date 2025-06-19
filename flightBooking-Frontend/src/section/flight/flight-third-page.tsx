@@ -1,20 +1,39 @@
 import {
   Box,
+  Button,
   Checkbox,
   Divider,
   FormControlLabel,
   Grid,
   Paper,
   Slider,
+  Stack,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
+import { useAppDispatch, useAppSelector } from "src/store";
+import { getAllFlights } from "src/store/flight/flightThunk";
 
 export const FlightThirdPage = () => {
   const [range, setRange] = useState<number[]>([85.436, 247.61]);
+    const [rangehr, setRangehr] = useState<number[]>([105, 1800]);
+        const [returnrangehr, setReturnRangehr] = useState<number[]>([105, 1800]);
+
+
+  const allFlights = useAppSelector((state) => state.flight.flightlist.data);
   const handleChange = (event: Event, newValue: number | number[]) => {
     setRange(newValue as number[]);
   };
+
+  const handleChangeTime = (event: Event, newValue: number | number[]) => {
+    setRangehr(newValue as number[]);
+  };
+   const handleChangeReturnTime = (event: Event, newValue: number | number[]) => {
+    setReturnRangehr(newValue as number[]);
+  };
+
+
   const logos = [
     { src: "hahnair.png", label: "Hahn Air" },
     { src: "gulfair.png", label: "Gulf Air" },
@@ -26,6 +45,46 @@ export const FlightThirdPage = () => {
     { label: "1 Stop", icon: "/icons/1stop.svg" },
     { label: "1 + Stop", icon: "/icons/multistop.svg" },
   ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const flightsPerPage = 1;
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const params = {} as any;
+    dispatch(getAllFlights(params));
+  }, [dispatch]);
+
+  const { from, to } = useAppSelector((state) => state.flight);
+const filteredFlights = allFlights.filter((flight: any) => {
+  const matchesPrice =
+    flight.price >= range[0] && flight.price <= range[1];
+  const matchesFrom = !from || flight.departureCity === from;
+  const matchesTo = !to || flight.arrivalCity === to;
+
+  return matchesPrice && matchesFrom && matchesTo;
+});
+
+const getDuration = (departureDate: string, departureTime: string, arrivalDate: string, arrivalTime: string) => {
+  const departure = new Date(`${departureDate}T${departureTime}`);
+  const arrival = new Date(`${arrivalDate}T${arrivalTime}`);
+  const diffMs = arrival.getTime() - departure.getTime(); // in milliseconds
+
+  const diffMins = Math.floor(diffMs / 1000 / 60);
+  const hours = Math.floor(diffMins / 60);
+  const minutes = diffMins % 60;
+
+  return `${hours}h ${minutes}m`;
+};
+
+// Pagination: current slice of filtered flights
+const indexOfLastFlight = currentPage * flightsPerPage;
+const indexOfFirstFlight = indexOfLastFlight - flightsPerPage;
+const currentFlights = filteredFlights.slice(indexOfFirstFlight, indexOfLastFlight);
+
+
+// Total Pages based on filtered flights
+const totalPages = Math.ceil(filteredFlights.length / flightsPerPage);
 
   return (
     <Box id="in-tbox" sx={{ m: { xs: 2, md: 4 } }}>
@@ -145,11 +204,11 @@ export const FlightThirdPage = () => {
               </Typography>
             </Box>
             <Slider
-              value={range}
-              onChange={handleChange}
+              value={rangehr}
+              onChange={handleChangeTime}
               valueLabelDisplay="auto"
-              min={85.436}
-              max={247.61}
+              min={105}
+              max={1800}
               step={10}
               sx={{ width: "90%", mt: 1 }}
               size="small"
@@ -171,11 +230,11 @@ export const FlightThirdPage = () => {
               </Typography>
             </Box>
             <Slider
-              value={range}
-              onChange={handleChange}
+              value={returnrangehr}
+              onChange={handleChangeReturnTime}
               valueLabelDisplay="auto"
-              min={85.436}
-              max={247.61}
+              min={105}
+              max={1800}
               step={10}
               sx={{ width: "90%", mt: 1 }}
               size="small"
@@ -228,50 +287,107 @@ export const FlightThirdPage = () => {
               Airlines
             </Typography>
             <FormControlLabel
-              control={<Checkbox size="small"  />}
+              control={<Checkbox size="small" />}
               label={
                 <Typography variant="body2">Hahn Air Businessline</Typography>
               }
             />
             <FormControlLabel
-              control={<Checkbox size="small"  />}
+              control={<Checkbox size="small" />}
               label={<Typography variant="body2">Qatar Airways</Typography>}
             />
             <FormControlLabel
-              control={<Checkbox size="small"  />}
+              control={<Checkbox size="small" />}
               label={<Typography variant="body2">Emirates Airlines</Typography>}
             />
             <FormControlLabel
-              control={<Checkbox size="small"  />}
+              control={<Checkbox size="small" />}
               label={<Typography variant="body2">Gulf Air Company</Typography>}
             />
             <FormControlLabel
-              control={<Checkbox size="small"  />}
+              control={<Checkbox size="small" />}
               label={<Typography variant="body2">Royal Jordanian</Typography>}
             />
           </Box>
         </Box>
 
         {/* Right Result Box */}
-        <Box id="rightbox" sx={{ flex: 3, p: 2 }}>
-          <Box
-            id="flightlogo"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              gap: 6,
-              px: 2,
-              py: 12,
-              bgcolor: "#fff",
-              borderRadius: 1,
-              boxShadow: 1,
-              mb: 3,
-            }}
-          ></Box>
-          {" "}
+        <Box id="rightbox">
+  {filteredFlights.length > 0 ? (
+    filteredFlights.map((flight: any) => {
+      const duration = getDuration(
+        flight.departureDate,
+        flight.departureTime,
+        flight.arrivalDate,
+        flight.arrivalTime
+      );
+
+      return (
+        <Box
+          key={flight._id}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: 6,
+            px: 2,
+            py: 6,
+            bgcolor: "#fff",
+            borderRadius: 1,
+            boxShadow: 1,
+            mb: 3,
+          }}
+        >
+          <strong>{flight.flightName}</strong>
+          <p>{flight.departureCity} → {flight.arrivalCity}</p>
+          <p>{flight.departureDate} at {flight.departureTime}</p>
+          <p>Duration: {duration}</p>
+          <p>Price: {flight.price} KWD</p>
         </Box>
+      );
+    })
+  ) : (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: 200,
+        bgcolor: "#fff",
+        borderRadius: 1,
+        boxShadow: 1,
+        mt: 3,
+      }}
+    >
+      <p>No flights found</p>
+    </Box>
+  )}
+
+  {/* Pagination */}
+  {filteredFlights.length > 0 && (
+    <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
+      <Button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </Button>
+      <span>
+        Page {currentPage} of {totalPages}
+      </span>
+      <Button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </Button>
+    </Stack>
+  )}
+</Box>
+
       </Box>
     </Box>
   );

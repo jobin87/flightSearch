@@ -1,10 +1,15 @@
-export interface IPatientParams {
-  age: number;
-  patientRegId: string;
-  patientName: string;
-  disease?: string;
-  contactNumber:number;
+export interface IFlightParams {
+  flightName: string;
+  flightNumber: string;
+  departureCity: string;
+  arrivalCity: string;
+  departureDate: string;   // Can also be `Date` if using JS Date object
+  arrivalDate: string;     // Can also be `Date`
+  departureTime: string;
+  arrivalTime: string;
+  price: number;
 }
+
 
 // export interface ISellersRegistrationApprovalParams {
 //   sellerId: string;

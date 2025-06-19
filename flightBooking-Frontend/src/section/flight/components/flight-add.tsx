@@ -15,6 +15,9 @@ import toast from "react-hot-toast";
 import { cities } from 'src/mockdata/_map/cities';
 import { countries } from 'src/mockdata/_map/countries';
 import { useEffect } from "react";
+import { useAppDispatch } from "src/store";
+import { useNavigate } from "react-router";
+import { requestAddFlights } from "src/store/flight/flightThunk";
 
 const FlightSchema = zod.object({
   flightName: zod.string().min(1, { message: "Flight Name is required" }),
@@ -32,6 +35,9 @@ const FlightSchema = zod.object({
 type FlightFormValues = zod.infer<typeof FlightSchema>;
 
 export function AddFlightForm() {
+
+   const dispatch = useAppDispatch();
+   const navigate = useNavigate()
   const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
 const nowTime = new Date().toLocaleTimeString('en-GB', {
   hour: '2-digit',
@@ -65,24 +71,24 @@ const arrivalTime = arrivalDate.toLocaleTimeString('en-GB', {
     formState: { isSubmitting },
   } = methods;
 
-  const onSubmit = async (data: FlightFormValues) => {
+const onSubmit = handleSubmit(async (data) => {
     try {
-      console.log("Submitted flight:", data);
-      toast.success("Flight added successfully!");
+      const response = await dispatch(requestAddFlights(data)).unwrap();
+      console.log("API Response:", response); // ✅ Debugging the full response
+      if (response?.success) {
+        toast.success("flight added successfully!");
+        console.log("flight added successfully!");
+        navigate('/')
+      }
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to add flight");
+      console.error("Error adding patient:", error);
     }
-  };
+  });
 
-  useEffect(() => {
-    const data =
-    
-
-  }, []);
+ 
 
   return (
-    <Form methods={methods} onSubmit={handleSubmit(onSubmit)}>
+<Form methods={methods} onSubmit={onSubmit}>
       <Card sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ mb: 2 }}>
           Add New Flight

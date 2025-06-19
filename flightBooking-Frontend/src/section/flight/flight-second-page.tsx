@@ -16,6 +16,9 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import { cities } from "src/mockdata/_map/cities";
 import { countries } from "src/mockdata/_map/countries";
+import { useNavigate } from "react-router";
+import { useAppDispatch } from "src/store";
+import { setSearchParams } from "src/store/flight/flightReducer";
 
 export const FlightSecondPage = () => {
   const [directOnly, setDirectOnly] = useState(false);
@@ -27,7 +30,12 @@ export const FlightSecondPage = () => {
   const cityOptions = cities.map(c => c.city);
   const countryOptions = countries.map(c => c.name);
 const combinedOptions = [...cityOptions, ...countryOptions]; // countries: string[]
+const navigate = useNavigate();
+const dispatch = useAppDispatch()
 
+const handleSearch = () => {
+  dispatch(setSearchParams({ from, to }));
+};
 
 
   return (
@@ -243,6 +251,7 @@ const combinedOptions = [...cityOptions, ...countryOptions]; // countries: strin
               textTransform: "none",
               ml: 2,
             }}
+            onClick={handleSearch}
           >
             Search
           </Button>
